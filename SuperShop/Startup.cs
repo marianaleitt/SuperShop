@@ -31,6 +31,8 @@ namespace SuperShop
             });
 
             services.AddTransient<SeedDb>();
+            services.AddScoped<IRepository, Repository>();
+            //services.AddScoped<IRepository, MockRepository>();
 
             services.AddControllersWithViews();
         }
