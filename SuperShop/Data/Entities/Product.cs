@@ -34,5 +34,19 @@ namespace SuperShop.Data.Entities
         public double Stock { get; set; }
 
         public User User { get; set; }
+
+        //propriedade para aparecer o caminho do servidor na API
+        public string ImageFullPath
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(ImageUrl))
+                {
+                    return null;
+                }
+
+                return $"https://localhost:44394{ImageUrl.Substring(1)}";
+            }
+        }
     }
 }
