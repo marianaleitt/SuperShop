@@ -2,14 +2,23 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using System.Web.Http.ModelBinding;
+using System.Web.Mvc;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using SuperShop.Data;
 using SuperShop.Data.Entities;
 using SuperShop.Helpers;
 using SuperShop.Models;
+using ActionNameAttribute = Microsoft.AspNetCore.Mvc.ActionNameAttribute;
+using Controller = Microsoft.AspNetCore.Mvc.Controller;
+using HttpPostAttribute = Microsoft.AspNetCore.Mvc.HttpPostAttribute;
+using ModelState = System.Web.Mvc.ModelState;
+using ValidateAntiForgeryTokenAttribute = Microsoft.AspNetCore.Mvc.ValidateAntiForgeryTokenAttribute;
 
 namespace SuperShop.Controllers
 {
@@ -17,12 +26,20 @@ namespace SuperShop.Controllers
     {
         private readonly IProductRepository _productRepository;
         private readonly IUserHelper _userHelper;
+        private readonly IImageHelper _imageHelper;
+        private readonly IConverterHelper _converterHelper;
 
         public ProductsController(
             IProductRepository productRepository,
-            IUserHelper userHelper)
+            IUserHelper userHelper,
+            IImageHelper imageHelper,
+            IConverterHelper converterHelper)
+
         {
             _productRepository = productRepository;
+            _userHelper = userHelper;
+            _imageHelper = imageHelper;
+            _converterHelper = converterHelper;
         }
 
         // GET: Products
@@ -32,7 +49,7 @@ namespace SuperShop.Controllers
         }
 
         // GET: Products/Details/5
-        public async Task < IActionResult> Details(int? id)
+        public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
             {
@@ -59,41 +76,26 @@ namespace SuperShop.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create( ProductViewModel model)
+        public async Task<IActionResult> Create(ProductViewModel model)
         {
             if (ModelState.IsValid)
             {
-
                 var path = string.Empty;
-
-                if(model.ImageFile != null && model.ImageFile.Length > 0)
+                if (model.ImageFile != null && model.ImageFile.Length > 0)
                 {
-                    var guid = Guid.NewGuid().ToString();
-                    var file = $"{guid}.jpg";
-
-                    path = Path.Combine(
-                         Directory.GetCurrentDirectory(),
-                        "wwwroot\\images\\products",
-                        file);
-
-                    using (var stream = new FileStream(path, FileMode.Create))
-                    {
-                        await model.ImageFile.CopyToAsync(stream);
-                    }
-
-                    path = $"/images/products/{file}";
+                    path = await _imageHelper.UploadImageAsync(model.ImageFile, "products");
                 }
 
-                var product = this.ToProduct(model, path);
+                var product = _converterHelper.ToProduct(model, path, true);
 
-                //TODO: Modificar para o user que tiver logado
+                //TODO: Modificar para o user que estiver logado
                 product.User = await _userHelper.GetUserByEmailAsync("marianaleitt@gmail.com");
-                await _productRepository.CreateAsync(product);
+                await _productRepository.UpdateAsync(product);
                 return RedirectToAction(nameof(Index));
             }
             return View(model);
-        }
 
+        }
         private Product ToProduct(ProductViewModel model, string path)
         {
             return new Product
@@ -102,13 +104,14 @@ namespace SuperShop.Controllers
                 ImageUrl = path,
                 IsAvailable = model.IsAvailable,
                 LastPurchase = model.LastPurchase,
-                LastSale = model.LastSale,
                 Name = model.Name,
                 Price = model.Price,
                 Stock = model.Stock,
-                User = model.User,
+                User = model.User
             };
         }
+    
+    
 
         // GET: Products/Edit/5
         public async Task<IActionResult> Edit(int? id)
@@ -123,11 +126,12 @@ namespace SuperShop.Controllers
             {
                 return NotFound();
             }
-            var model = this.ToProductViewModel(product);
+
+            var model = _converterHelper.ToProductViewModel(product);
             return View(model);
         }
 
-        private ProductViewModel ToProductViewModel(Product product)
+        private  ProductViewModel ToProductViewModel(Product product)
         {
             return new ProductViewModel
             {
@@ -142,6 +146,7 @@ namespace SuperShop.Controllers
                 User = product.User,
             };
         }
+
 
         // POST: Products/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
@@ -159,20 +164,10 @@ namespace SuperShop.Controllers
 
                     if (model.ImageFile != null && model.ImageFile.Length > 0)
                     {
-                        path = Path.Combine(
-                               Directory.GetCurrentDirectory(),
-                               "wwwroot\\images\\products",
-                               model.ImageFile.FileName);
-
-                        using(var stream = new FileStream(path, FileMode.Create))
-                        {
-                            await model.ImageFile.CopyToAsync(stream);
-                        }
-
-                        path = $"/images/products/{model.ImageFile.FileName}";
+                        path = await _imageHelper.UploadImageAsync(model.ImageFile, "products");
                     }
 
-                    var product = this.ToProduct(model, path);
+                    var product = _converterHelper.ToProduct(model,path,false);
 
                     //TODO: Modificar para o user que estiver logado
                     product.User = await _userHelper.GetUserByEmailAsync("marianaleitt@gmail.com");
