@@ -109,9 +109,7 @@ namespace SuperShop.Controllers
                 Stock = model.Stock,
                 User = model.User
             };
-        }
-    
-    
+        }      
 
         // GET: Products/Edit/5
         public async Task<IActionResult> Edit(int? id)
