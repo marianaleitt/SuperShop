@@ -19,7 +19,7 @@ namespace SuperShop.Data.Entities
 
         [Display(Name = "Image")]
         //Nomeia o campo na web
-        public string ImageUrl { get; set; }
+        public Guid ImageId { get; set; }
 
         [Display(Name ="Last Purchase")]
         public DateTime? LastPurchase { get; set; }
@@ -36,17 +36,8 @@ namespace SuperShop.Data.Entities
         public User User { get; set; }
 
         //propriedade para aparecer o caminho do servidor na API
-        public string ImageFullPath
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(ImageUrl))
-                {
-                    return null;
-                }
-
-                return $"https://localhost:44394{ImageUrl.Substring(1)}";
-            }
-        }
+        public string ImageFullPath => ImageId == Guid.Empty
+            ? $"http://mldomain.somee.com/"
+            :$"http://mldomain.somee.com/";
     }
 }
