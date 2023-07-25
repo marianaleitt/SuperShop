@@ -37,7 +37,7 @@ namespace SuperShop.Data.Entities
 
         //propriedade para aparecer o caminho do servidor na API
         public string ImageFullPath => ImageId == Guid.Empty
-            ? $"http://mldomain.somee.com/"
-            :$"http://mldomain.somee.com/";
+            ? $"http://mldomain.somee.com/images/noimage.png"
+            :$"http://mldomain.somee.com/products/{ImageId}";
     }
 }

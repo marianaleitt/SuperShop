@@ -1,24 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
-using System.Web.Http.ModelBinding;
-using System.Web.Mvc;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.VisualStudio.Core.Imaging;
 using SuperShop.Data;
 using SuperShop.Data.Entities;
 using SuperShop.Helpers;
 using SuperShop.Models;
-using ActionNameAttribute = Microsoft.AspNetCore.Mvc.ActionNameAttribute;
-using Controller = Microsoft.AspNetCore.Mvc.Controller;
-using HttpPostAttribute = Microsoft.AspNetCore.Mvc.HttpPostAttribute;
-using ModelState = System.Web.Mvc.ModelState;
-using ValidateAntiForgeryTokenAttribute = Microsoft.AspNetCore.Mvc.ValidateAntiForgeryTokenAttribute;
+
 
 namespace SuperShop.Controllers
 {
@@ -26,19 +16,19 @@ namespace SuperShop.Controllers
     {
         private readonly IProductRepository _productRepository;
         private readonly IUserHelper _userHelper;
-        private readonly IImageHelper _imageHelper;
+        private readonly IBlobHelper _blobHelper;
         private readonly IConverterHelper _converterHelper;
 
         public ProductsController(
             IProductRepository productRepository,
             IUserHelper userHelper,
-            IImageHelper imageHelper,
+            IBlobHelper blobHelper,
             IConverterHelper converterHelper)
 
         {
             _productRepository = productRepository;
             _userHelper = userHelper;
-            _imageHelper = imageHelper;
+            _blobHelper = blobHelper;
             _converterHelper = converterHelper;
         }
 
@@ -78,15 +68,17 @@ namespace SuperShop.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ProductViewModel model)
         {
+
             if (ModelState.IsValid)
             {
-                var path = string.Empty;
+                Guid imageId = Guid.Empty;
+
                 if (model.ImageFile != null && model.ImageFile.Length > 0)
                 {
-                    path = await _imageHelper.UploadImageAsync(model.ImageFile, "products");
+                    imageId = await _blobHelper.UploadBlobAsync(model.ImageFile,"products");
                 }
 
-                var product = _converterHelper.ToProduct(model, path, true);
+                var product = _converterHelper.ToProduct(model, imageId, false);
 
                 //TODO: Modificar para o user que estiver logado
                 product.User = await _userHelper.GetUserByEmailAsync("marianaleitt@gmail.com");
@@ -101,7 +93,7 @@ namespace SuperShop.Controllers
             return new Product
             {
                 Id = model.Id,
-                ImageUrl = path,
+                ImageId = model.ImageId,
                 IsAvailable = model.IsAvailable,
                 LastPurchase = model.LastPurchase,
                 Name = model.Name,
@@ -134,7 +126,7 @@ namespace SuperShop.Controllers
             return new ProductViewModel
             {
                 Id = product.Id,
-                ImageUrl = product.ImageUrl,
+                ImageId = product.ImageId,
                 IsAvailable = product.IsAvailable,
                 LastPurchase = product.LastPurchase,
                 LastSale = product.LastSale,
@@ -158,14 +150,14 @@ namespace SuperShop.Controllers
             {
                 try
                 {
-                    var path = model.ImageUrl;
+                    var path = model.ImageId;
 
                     if (model.ImageFile != null && model.ImageFile.Length > 0)
                     {
-                        path = await _imageHelper.UploadImageAsync(model.ImageFile, "products");
+                        path = await _blobHelper.UploadImageAsync(model.ImageFile, "products");
                     }
 
-                    var product = _converterHelper.ToProduct(model,path,false);
+                    var product = _converterHelper.ToProduct(model, ImageId, false);
 
                     //TODO: Modificar para o user que estiver logado
                     product.User = await _userHelper.GetUserByEmailAsync("marianaleitt@gmail.com");
