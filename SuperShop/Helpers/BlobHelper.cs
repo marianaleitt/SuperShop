@@ -12,8 +12,10 @@ namespace SuperShop.Helpers
     public class BlobHelper : IBlobHelper
     {
         private readonly CloudBlobClient _blobClient;
+
         public BlobHelper(IConfiguration configuration)
         {
+                //_configuration = configuration;
             string keys = configuration["Blob:ConnectionString"];
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(keys);
             _blobClient =storageAccount.CreateCloudBlobClient();
@@ -34,6 +36,11 @@ namespace SuperShop.Helpers
         {
             Stream stream = File.OpenRead(image);
             return await UploadStreamAsync(stream, containterName);
+        }
+
+        public Task<Guid> UploadImageAsync(IFormFile imageFile, string v)
+        {
+            throw new NotImplementedException();
         }
 
         private async Task<Guid> UploadStreamAsync(Stream stream, string containterName)

@@ -48,13 +48,10 @@
                     @Html.DisplayFor(model => model.Stock)
                 </dd>
             </dl>
-            <div class="col-md-4">
-                @if (!string.IsNullOrEmpty(Model.ImageFullPath))
-                {
-                    <img src="@Url.Content(Model.ImageFullPath)" alt="Image" style="width:300px;height:450px;max-width:100%;height:auto">
-                }
-            </div>
         </div>
+            <div class="col-md-4">
+                <img src="@Url.Content(Model.ImageFullPath)" alt="Image" style="width:300px;height:450px;max-width:100%;height:auto">
+            </div>
     </div>
 </div>
 <div>

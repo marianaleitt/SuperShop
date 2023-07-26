@@ -7,6 +7,10 @@ namespace SuperShop.Helpers
 {
     public class ConverterHelper : IConverterHelper
     {
+        public ConverterHelper()
+        {
+        }
+
         public Product ToProduct(ProductViewModel model, Guid imageId,  bool isNew)
         {
             return new Product

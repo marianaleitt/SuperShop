@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.Core.Imaging;
@@ -12,6 +13,7 @@ using SuperShop.Models;
 
 namespace SuperShop.Controllers
 {
+
     public class ProductsController : Controller
     {
         private readonly IProductRepository _productRepository;
@@ -56,6 +58,7 @@ namespace SuperShop.Controllers
         }
 
         // GET: Products/Create
+        [Authorize]
         public IActionResult Create()
         {
             return View();
@@ -101,9 +104,10 @@ namespace SuperShop.Controllers
                 Stock = model.Stock,
                 User = model.User
             };
-        }      
+        }
 
         // GET: Products/Edit/5
+        [Authorize]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -157,7 +161,7 @@ namespace SuperShop.Controllers
                         path = await _blobHelper.UploadImageAsync(model.ImageFile, "products");
                     }
 
-                    var product = _converterHelper.ToProduct(model, ImageId, false);
+                    var product = _converterHelper.ToProduct(model,path, false);
 
                     //TODO: Modificar para o user que estiver logado
                     product.User = await _userHelper.GetUserByEmailAsync("marianaleitt@gmail.com");
