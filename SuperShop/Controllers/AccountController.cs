@@ -101,5 +101,55 @@ namespace SuperShop.Controllers
             }
             return View(model);
         }
+        public async Task<IActionResult> ChangeUser(ChangeUserViewmodel model)
+        {
+            var user = await _userHelper.GetUserByEmailAsync(this.User.Identity.Name);
+            if (user != null)
+            {
+                user.FirstName = model.FirstName;
+                user.LastName = model.LastName;
+                var response = await _userHelper.UpdateUserAsync(user);
+                if( response.Succeeded)
+                {
+                    ViewBag.UserMessage = "User updated!";
+                }
+                else
+                {
+                    ModelState.AddModelError(string.Empty, response.Errors.FirstOrDefault().Description); 
+                }
+            }
+            return View(model);
+        }
+
+        public IActionResult ChangePassword()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
+        {
+            if (this.ModelState.IsValid)
+            {
+                var user = await _userHelper.GetUserByEmailAsync(this.User.Identity.Name);
+                if (user != null)
+                {
+                    var result = await _userHelper.ChangePasswordAsync(user, model.OldPassword, model.NewPassword);
+                    if (result.Succeeded)
+                    {
+                        return this.RedirectToAction("ChangeUser");
+                    }
+                    else
+                    {
+                        this.ModelState.AddModelError(string.Empty, result.Errors.FirstOrDefault().Description);
+                    }
+                }
+                else
+                {
+                    this.ModelState.AddModelError(string.Empty, "User not found");
+                }
+            }
+            return this.View(model);
+        }
     }
 }
