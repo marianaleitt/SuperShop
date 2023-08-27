@@ -206,8 +206,25 @@ namespace SuperShop.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var product = await _productRepository.GetByIdAsync(id);
-            await _productRepository.DeleteAsync(product);
-            return RedirectToAction(nameof(Index));
+
+            try
+            {
+                await _productRepository.DeleteAsync(product);
+                return RedirectToAction(nameof(Index));
+            }
+
+            catch (DbUpdateException ex)
+            {
+                if (ex.InnerException != null && ex.InnerException.Message.Contains("DELETE"))
+                {
+                    ViewBag.ErrorTitle = $"{product.Name} provavelmente está a ser usado!";
+                    ViewBag.ErrorMessage = $"{product.Name} não pode ser usado visto haverem encomendas que o usam.</br></br>"+
+                                       $"Experimente apagar todas as encomendas que o estão a usar,";
+                }
+
+                return View("Error");
+            }
+         
         }
 
         public IActionResult ProductNotFound()
